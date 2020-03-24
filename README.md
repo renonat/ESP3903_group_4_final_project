@@ -8,3 +8,8 @@ $ make venv
 $ source venv/bin/activate
 $ make development
 ```
+
+## Running the Server
+```
+$ make server
+```

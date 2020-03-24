@@ -7,9 +7,7 @@ development: venv
 
 .PHONY: server
 server: development
-	export FLASK_ENV=development
-	export FLASK_APP=server.py
-	flask run
+	python3 -m lecture_system.server
 
 .PHONY: test
 test: development
