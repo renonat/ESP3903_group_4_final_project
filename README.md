@@ -13,5 +13,3 @@ $ make development
 ```
 $ make server
 ```
-
-test
