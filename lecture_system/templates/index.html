@@ -3,20 +3,52 @@
 <head>
     <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js" integrity="sha256-yr4fRk/GU1ehYJPAs8P4JlTgu0Hdsp4ZKrx8bDEDC3I=" crossorigin="anonymous"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js"></script>
     <script type="text/javascript" charset="utf-8">
         //Client-side Javascript code for handling random numbers
         $(document).ready(function(){
             //connect to the socket server.
             var socket = io.connect('http://' + document.domain + ':' + location.port + '/');
             var numbers_received = [];
+
+            Plotly.plot('chart', [{
+                y: [0],
+                type: 'line'
+            }])
+
+
             //receive details from server
             socket.on('speaker_update', function(msg) {
-                $('#log').html(msg.data);
+                var cnt = msg.data.eventcounter / 100;
+                // console.log(cnt);
+                $('#log').html(msg.data.table);
+
+                // console.log(msg.data.timeseries);
+                Plotly.extendTraces('chart', {
+                    y: [[msg.data.timeseries.s1]]}, [0]
+                );
+
+                if(cnt > 10) {
+                    Plotly.relayout('chart', {
+                        xaxis: {
+                            range: [cnt-10, cnt]
+                        }
+                    });
+                }
             });
+
         });
     </script>
 </head>
 <body>
     <div id="log"></div>
+
+    <div class="chart" id="chart">
+    <script>
+        // var graphs = {{plot | safe}};
+        // Plotly.plot('bargraph',graphs,{});
+    </script>
+</div>
 </body>
 </html>
