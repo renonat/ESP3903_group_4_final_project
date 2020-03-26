@@ -2,8 +2,8 @@ from typing import List, Tuple, NamedTuple, NewType
 from dataclasses import dataclass
 
 from lecture_system.types import Speaker, Sensor
-from lecture_system.constants import *
-from lecture_system.room_layout import *
+from lecture_system.constants import ADJ_RATE
+from lecture_system.room_layout import SPEAKER_ARRAY, SENSOR_POSITIONS
 
 class Controller():
     speakers: List[Speaker]

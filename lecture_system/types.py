@@ -1,10 +1,10 @@
 from typing import List, Tuple, NamedTuple, NewType
 from dataclasses import dataclass
-from math import log10, exp, sqrt
+from math import log10, sqrt
 from functools import reduce
 from collections import deque
 
-from lecture_system.constants import *
+from lecture_system.constants import CALIBRATION_DB, REFERENCE_DISTANCE, SENSOR_SAMPLE_LENGTH
 
 class Position(NamedTuple):
     x: int
