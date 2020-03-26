@@ -35,3 +35,16 @@ def generate_html_room_display(speakers: List[Speaker], sensors: List[Sensor]) -
     for row in room_arr:
         table.add_row(row)
     return table.get_html_string(format=True)
+
+def dataToDict(speakers: List[Speaker], sensors: List[Sensor]) -> dict:
+    return {
+        "speakers": [{
+            "loudness": speaker.loudness,
+            "gain": speaker.gain,
+            "position": speaker.position
+        } for speaker in speakers],
+        "sensors": [{
+            "loudness": sensor.loudness,
+            "position": sensor.position
+        } for sensor in sensors]
+    }

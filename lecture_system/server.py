@@ -11,7 +11,7 @@ import json
 from lecture_system.types import Speaker, Sensor
 from lecture_system.sensor_processing import measure_with_sensors, update_speaker_gain
 from lecture_system import constants
-from lecture_system.frontend_helpers import formatted_speaker_data, generate_html_room_display
+from lecture_system.frontend_helpers import formatted_speaker_data, generate_html_room_display, dataToDict
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'esp3903!'
@@ -47,27 +47,16 @@ def microphoneInputReader():
 
         if eventcounter % 100 == 0:
             # Every time this event is emitted, the webpage content is updated
-            socketio.emit('speaker_update', {'data': {
+            socketio.emit('system_update', {'data': {
                 "table" : formatted_speaker_data(speakers),
                 "readings" : dataToDict(speakers, sensors),
-                "eventcounter": eventcounter
+                "eventcounter": eventcounter,
+                "roomlayout": generate_html_room_display(speakers, sensors)
             }})
-            socketio.emit('roomlayout_update', {'data': generate_html_room_display(speakers, sensors)})
+
         socketio.sleep(0.001)
         eventcounter += 1
 
-def dataToDict(speakers: List[Speaker], sensors: List[Sensor]) -> dict:
-    return {
-        "speakers": [{
-            "loudness": speaker.loudness,
-            "gain": speaker.gain,
-            "position": speaker.position
-        } for speaker in speakers],
-        "sensors": [{
-            "loudness": sensor.loudness,
-            "position": sensor.position
-        } for sensor in sensors]
-    }
 
 
 @socketio.on('connect')

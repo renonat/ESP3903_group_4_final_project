@@ -1,105 +1,114 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <style>
-        .row { 
-            display: flex;
-            height: 45vh
-        }
+	<style>
+		* {
+			box-sizing: border-box;
+		}
 
-        .graph {
-            border: 1px solid black;
-            width: calc(100% / 3);
-            margin: 8px;
-            padding: 8px;
-            /*height: 10px;*/
-        }
-    </style>
+		.row { 
+			display: flex;
+			height: 45vh
+		}
 
-    <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js" integrity="sha256-yr4fRk/GU1ehYJPAs8P4JlTgu0Hdsp4ZKrx8bDEDC3I=" crossorigin="anonymous"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js"></script>
-    <script type="text/javascript" charset="utf-8">
-        $(document).ready(function(){
-            //connect to the socket server.
-            var socket = io.connect('http://' + document.domain + ':' + location.port + '/');
+		.graph {
+			border: 1px solid black;
+			width: 100%;
+			max-width: calc(100% / 3);
+			margin: 8px;
+			padding: 8px;
+			/*height: 10px;*/
+		}
+	</style>
 
-            var numbers_received = [];
+	<script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js" integrity="sha256-yr4fRk/GU1ehYJPAs8P4JlTgu0Hdsp4ZKrx8bDEDC3I=" crossorigin="anonymous"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+	<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js"></script>
+	<script type="text/javascript" charset="utf-8">
+		$(document).ready(function(){
+			//connect to the socket server.
+			var socket = io.connect('http://' + document.domain + ':' + location.port + '/');
 
-            let sensor_ids = ["sensor1", "sensor2", "sensor3"];
-            let speaker_ids = ["speaker1", "speaker2"];
-            let chart_ids = sensor_ids.concat(speaker_ids);
+			var numbers_received = [];
 
-            chart_ids.forEach(chart_id => {
-                Plotly.plot(chart_id, [{
-                    y: [0],
-                    type: 'line'
-                }])
-            });
-            
-            //receive details from server
-            socket.on('speaker_update', function(msg) {
-                $('#log').html(msg.data.table);
+			let sensor_ids = ["sensor1", "sensor2", "sensor3"];
+			let speaker_ids = ["speaker1", "speaker2"];
+			let chart_ids = sensor_ids.concat(speaker_ids);
 
+			chart_ids.forEach(chart_id => {
+				Plotly.plot(chart_id, [{
+					y: [0],
+					type: 'line'
+				}])
+			});
+			
+			//receive details from server
+			socket.on('system_update', function(msg) {
+				const {table, readings, eventcounter, roomlayout} = msg.data;
 
-                // update speaker graphs
-                for (let i = 0; i < speaker_ids.length; i++) {
-                    Plotly.extendTraces(speaker_ids[i], {
-                        y: [[msg.data.readings.speakers[i].gain]]}, [0]
-                    );
-                }
+				// update html table and room layout
+				$('#log').html(table);
+				$('#roomlayout').html(roomlayout);
 
 
-                // update sensor graphs
-                for (let i = 0; i < sensor_ids.length; i++) {
-                    Plotly.extendTraces(sensor_ids[i], {
-                        y: [[msg.data.readings.sensors[i].loudness]]}, [0]
-                    );
-                }
+				// update speaker graphs
+				for (let i = 0; i < speaker_ids.length; i++) {
+					Plotly.extendTraces(speaker_ids[i], {
+						y: [[readings.speakers[i].gain]]}, [0]
+					);
+				}
 
-                let cnt = msg.data.eventcounter / 100;
-                if(cnt > 10) {
-                    chart_ids.forEach(chart_id => {
-                        Plotly.relayout(chart_id, {
-                            xaxis: {
-                                range: [cnt-10, cnt]
-                            }
-                        });
-                    });                    
-                }
-            });
+				// update sensor graphs
+				for (let i = 0; i < sensor_ids.length; i++) {
+					Plotly.extendTraces(sensor_ids[i], {
+						y: [[readings.sensors[i].loudness]]}, [0]
+					);
+				}
 
-            socket.on('roomlayout_update', function(msg) {
-                $('#roomlayout').html(msg.data);
-            });
+				// update all graphs for sliding axis after 20 "ticks"
+				let cnt = eventcounter / 100;
+				let offset = 20;
+				if (cnt > offset) {
+					chart_ids.forEach(chart_id => {
+						Plotly.relayout(chart_id, {
+							xaxis: {
+								range: [cnt-offset, cnt]
+							}
+						});
+					});                    
+				}
+			});
 
-        });
-    </script>
+		});
+	</script>
 </head>
 
 <body>
-    <div id="log"></div>
+	<div id="log"></div>
 
-    <main class='main'>
+	<main class='main'>
 
-        <div class="row">
-            <div id="sensor1" class="graph"></div>
-            <div id="sensor2" class="graph"></div>
-            <div id="sensor3" class="graph"></div>
-        </div>
+		<div class="row">
+			<div id="sensor1" class="graph"></div>
+			<div id="sensor2" class="graph"></div>
+			<div id="sensor3" class="graph"></div>
+		</div>
 
-        <div class="row">
-            <div id="speaker1" class="graph"></div>
-            <div id="room" class="graph">
-              <div style="display: block; text-align: center;">Front of Room</span></br>
-              <div id="roomlayout" 
-                  style="border-style: solid; display: inline-flex; border-width: thin; background-color: #efe5d2">
-              </div>
-            </div>
-            <div id="speaker2" class="graph"></div>
-        </div>
-    </main>
+		<div class="row">
+			<div id="speaker1" class="graph"></div>
+
+			<div id="room" class="graph">
+				<div style='text-align: center'>Front of Room</div>
+
+				<div id="roomlayout" 
+					style="border-style: solid; border-width: thin; background-color: #efe5d2; max-width: 100%; overflow-x: scroll;">
+				</div>
+			</div>
+
+			<div id="speaker2" class="graph"></div>
+		</div>
+	</main>
 
 </body>
 </html>
