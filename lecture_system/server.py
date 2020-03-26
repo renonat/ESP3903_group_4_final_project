@@ -3,7 +3,12 @@ from flask_socketio import SocketIO  # type: ignore
 from threading import Thread, Event
 from typing import Optional
 
-from lecture_system.types import Speaker
+import plotly
+import plotly.graph_objs as go
+import plotly.express as px
+import json
+
+from lecture_system.types import Speaker, Sensor
 from lecture_system.sensor_processing import measure_with_sensors, update_speaker_gain
 from lecture_system import constants
 from lecture_system.frontend_helpers import formatted_speaker_data, generate_html_room_display
@@ -42,10 +47,27 @@ def microphoneInputReader():
 
         if eventcounter % 100 == 0:
             # Every time this event is emitted, the webpage content is updated
-            socketio.emit('speaker_update', {'data': formatted_speaker_data(speakers)})
+            socketio.emit('speaker_update', {'data': {
+                "table" : formatted_speaker_data(speakers),
+                "readings" : dataToDict(speakers, sensors),
+                "eventcounter": eventcounter
+            }})
             socketio.emit('roomlayout_update', {'data': generate_html_room_display(speakers, sensors)})
         socketio.sleep(0.001)
         eventcounter += 1
+
+def dataToDict(speakers: List[Speaker], sensors: List[Sensor]) -> dict:
+    return {
+        "speakers": [{
+            "loudness": speaker.loudness,
+            "gain": speaker.gain,
+            "position": speaker.position
+        } for speaker in speakers],
+        "sensors": [{
+            "loudness": sensor.loudness,
+            "position": sensor.position
+        } for sensor in sensors]
+    }
 
 
 @socketio.on('connect')
