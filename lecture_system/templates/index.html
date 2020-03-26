@@ -27,29 +27,48 @@
             var socket = io.connect('http://' + document.domain + ':' + location.port + '/');
             var numbers_received = [];
 
-            Plotly.plot('chart', [{
-                y: [0],
-                type: 'line'
-            }])
+            let sensor_ids = ["sensor1", "sensor2", "sensor3"];
+            let speaker_ids = ["speaker1", "speaker2"];
+            let chart_ids = sensor_ids.concat(speaker_ids);
+
+            chart_ids.forEach(chart_id => {
+                Plotly.plot(chart_id, [{
+                    y: [0],
+                    type: 'line'
+                }])
+            });
+            
 
 
             //receive details from server
             socket.on('speaker_update', function(msg) {
-                var cnt = msg.data.eventcounter / 100;
-                // console.log(cnt);
                 $('#log').html(msg.data.table);
 
-                // console.log(msg.data.timeseries);
-                Plotly.extendTraces('chart', {
-                    y: [[msg.data.timeseries.s1]]}, [0]
-                );
 
+                // update speaker graphs
+                for (let i = 0; i < speaker_ids.length; i++) {
+                    Plotly.extendTraces(speaker_ids[i], {
+                        y: [[msg.data.readings.speakers[i].gain]]}, [0]
+                    );
+                }
+
+
+                // update sensor graphs
+                for (let i = 0; i < sensor_ids.length; i++) {
+                    Plotly.extendTraces(sensor_ids[i], {
+                        y: [[msg.data.readings.sensors[i].loudness]]}, [0]
+                    );
+                }
+
+                let cnt = msg.data.eventcounter / 100;
                 if(cnt > 10) {
-                    Plotly.relayout('chart', {
-                        xaxis: {
-                            range: [cnt-10, cnt]
-                        }
-                    });
+                    chart_ids.forEach(chart_id => {
+                        Plotly.relayout(chart_id, {
+                            xaxis: {
+                                range: [cnt-10, cnt]
+                            }
+                        });
+                    });                    
                 }
             });
 

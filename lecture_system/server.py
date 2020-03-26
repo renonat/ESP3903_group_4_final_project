@@ -10,7 +10,7 @@ import plotly.graph_objs as go
 import plotly.express as px
 import json
 
-from lecture_system.types import Speaker
+from lecture_system.types import Speaker, Sensor
 from lecture_system.sensor_processing import measure_with_sensors, update_speaker_gain
 from lecture_system import constants
 
@@ -48,11 +48,6 @@ def microphoneInputReader():
     speakers = constants.SPEAKER_ARRAY
     eventcounter = 0
 
-    timeseries = {
-            "s1": 0,
-            "s2": 0
-        }
-
     while not thread_stop_event.isSet():
         for i in range(len(speakers)):
             speaker = speakers[i]
@@ -60,18 +55,28 @@ def microphoneInputReader():
         sensors = measure_with_sensors(speakers)
         speakers = update_speaker_gain(speakers, sensors)
 
-        timeseries['s1'] = speakers[0].loudness
-        # timeseries['s2'].append(speakers[1])
-
         if eventcounter % 100 == 0:
             # Every time this event is emitted, the webpage content is updated
             socketio.emit('speaker_update', {'data': {
                 "table" : formatted_speaker_data(speakers),
-                "timeseries" : timeseries,
+                "readings" : dataToDict(speakers, sensors),
                 "eventcounter": eventcounter
             }})
         socketio.sleep(0.01)
         eventcounter += 1
+
+def dataToDict(speakers: List[Speaker], sensors: List[Sensor]) -> dict:
+    return {
+        "speakers": [{
+            "loudness": speaker.loudness,
+            "gain": speaker.gain,
+            "position": speaker.position
+        } for speaker in speakers],
+        "sensors": [{
+            "loudness": sensor.loudness,
+            "position": sensor.position
+        } for sensor in sensors]
+    }
 
 
 @socketio.on('connect')
