@@ -21,10 +21,10 @@
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js"></script>
     <script type="text/javascript" charset="utf-8">
-        //Client-side Javascript code for handling random numbers
         $(document).ready(function(){
             //connect to the socket server.
             var socket = io.connect('http://' + document.domain + ':' + location.port + '/');
+
             var numbers_received = [];
 
             let sensor_ids = ["sensor1", "sensor2", "sensor3"];
@@ -38,8 +38,6 @@
                 }])
             });
             
-
-
             //receive details from server
             socket.on('speaker_update', function(msg) {
                 $('#log').html(msg.data.table);
@@ -72,6 +70,10 @@
                 }
             });
 
+            socket.on('roomlayout_update', function(msg) {
+                $('#roomlayout').html(msg.data);
+            });
+
         });
     </script>
 </head>
@@ -89,7 +91,12 @@
 
         <div class="row">
             <div id="speaker1" class="graph"></div>
-            <div id="room" class="graph"></div>
+            <div id="room" class="graph">
+              <div style="display: block; text-align: center;">Front of Room</span></br>
+              <div id="roomlayout" 
+                  style="border-style: solid; display: inline-flex; border-width: thin; background-color: #efe5d2">
+              </div>
+            </div>
             <div id="speaker2" class="graph"></div>
         </div>
     </main>

@@ -1,9 +1,7 @@
 from flask import Flask, render_template
 from flask_socketio import SocketIO  # type: ignore
-from threading import Thread
-from typing import List
 from threading import Thread, Event
-from prettytable import PrettyTable  # type: ignore
+from typing import Optional
 
 import plotly
 import plotly.graph_objs as go
@@ -13,11 +11,12 @@ import json
 from lecture_system.types import Speaker, Sensor
 from lecture_system.sensor_processing import measure_with_sensors, update_speaker_gain
 from lecture_system import constants
+from lecture_system.frontend_helpers import formatted_speaker_data, generate_html_room_display
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'esp3903!'
 socketio = SocketIO(app, async_mode=None)
-thread = Thread()
+thread: Optional[Thread] = None
 thread_stop_event = Event()
 
 
@@ -28,15 +27,6 @@ def main():
     Demonstrates that we can live update the values using sockets
     """
     return render_template('index.html')
-
-
-def formatted_speaker_data(speakers: List[Speaker]) -> str:
-    """Used to display pretty speaker data on the webpage"""
-    table = PrettyTable(['Speaker', 'Loudness', 'Gain', 'Position'])
-    for i in range(len(speakers)):
-        speaker = speakers[i]
-        table.add_row([i, f"{speaker.loudness:0.2f}", f"{speaker.gain:0.2f}", speaker.position])
-    return table.get_html_string()
 
 
 def microphoneInputReader():
@@ -62,7 +52,8 @@ def microphoneInputReader():
                 "readings" : dataToDict(speakers, sensors),
                 "eventcounter": eventcounter
             }})
-        socketio.sleep(0.01)
+            socketio.emit('roomlayout_update', {'data': generate_html_room_display(speakers, sensors)})
+        socketio.sleep(0.001)
         eventcounter += 1
 
 def dataToDict(speakers: List[Speaker], sensors: List[Sensor]) -> dict:
@@ -85,10 +76,10 @@ def connect():
     global thread
     print('Client connected')
     #Start the microphone reading thread only if the thread has not been started before.
-    if not thread.isAlive():
+    if thread is None:
         print("Starting Thread")
         thread = socketio.start_background_task(microphoneInputReader)
 
 
 if __name__ == '__main__':
-    socketio.run(app)
+    socketio.run(app, debug=True)
