@@ -1,6 +1,21 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <style>
+        .row { 
+            display: flex;
+            height: 45vh
+        }
+
+        .graph {
+            border: 1px solid black;
+            width: calc(100% / 3);
+            margin: 8px;
+            padding: 8px;
+            /*height: 10px;*/
+        }
+    </style>
+
     <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js" integrity="sha256-yr4fRk/GU1ehYJPAs8P4JlTgu0Hdsp4ZKrx8bDEDC3I=" crossorigin="anonymous"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
@@ -41,14 +56,24 @@
         });
     </script>
 </head>
+
 <body>
     <div id="log"></div>
 
-    <div class="chart" id="chart">
-    <script>
-        // var graphs = {{plot | safe}};
-        // Plotly.plot('bargraph',graphs,{});
-    </script>
-</div>
+    <main class='main'>
+
+        <div class="row">
+            <div class="graph"></div>
+            <div class="graph"></div>
+            <div class="graph"></div>
+        </div>
+
+        <div class="row">
+            <div class="graph"></div>
+            <div class="graph"></div>
+            <div class="graph"></div>
+        </div>
+    </main>
+
 </body>
 </html>
