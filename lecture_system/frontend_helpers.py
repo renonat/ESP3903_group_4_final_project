@@ -9,7 +9,7 @@ def formatted_speaker_data(speakers: List[Speaker]) -> str:
     table = PrettyTable(['Speaker', 'Loudness', 'Gain', 'Position'])
     for i in range(len(speakers)):
         speaker = speakers[i]
-        table.add_row([i, f"{speaker.loudness:0.2f}", f"{speaker.gain:0.2f}", speaker.position])
+        table.add_row([i, f"{speaker.getLoudness():0.2f}", f"{speaker.gain:0.2f}", speaker.position])
     return table.get_html_string()
 
 
@@ -27,10 +27,10 @@ def generate_html_room_display(speakers: List[Speaker], sensors: List[Sensor]) -
     # Place the speaker and sensor emoji, as well as live readout data below
     for speaker in speakers:
         room_arr[speaker.position.y + 2][speaker.position.x + 2] = "🔊"
-        room_arr[speaker.position.y + 3][speaker.position.x + 2] = f"{speaker.loudness:0.2f}dB"
+        room_arr[speaker.position.y + 3][speaker.position.x + 2] = f"{speaker.getLoudness():0.2f}dB"
     for sensor in sensors:
         room_arr[sensor.position.y + 2][sensor.position.x + 2] = "🎙️"
-        room_arr[sensor.position.y + 3][sensor.position.x + 2] = f"{sensor.loudness:0.2f}dB"
+        room_arr[sensor.position.y + 3][sensor.position.x + 2] = f"{sensor.getSensorValue():0.2f}dB"
 
     for row in room_arr:
         table.add_row(row)
@@ -39,12 +39,12 @@ def generate_html_room_display(speakers: List[Speaker], sensors: List[Sensor]) -
 def dataToDict(speakers: List[Speaker], sensors: List[Sensor]) -> dict:
     return {
         "speakers": [{
-            "loudness": speaker.loudness,
+            "loudness": speaker.getLoudness(),
             "gain": speaker.gain,
             "position": speaker.position
         } for speaker in speakers],
         "sensors": [{
-            "loudness": sensor.loudness,
+            "loudness": sensor.getSensorValue(),
             "position": sensor.position
         } for sensor in sensors]
     }

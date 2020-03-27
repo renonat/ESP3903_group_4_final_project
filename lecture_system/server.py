@@ -9,9 +9,9 @@ import plotly.express as px
 import json
 
 from lecture_system.types import Speaker, Sensor
-from lecture_system.sensor_processing import measure_with_sensors, update_speaker_gain
-from lecture_system import constants
+from lecture_system.room_layout import SPEAKER_ARRAY, SENSOR_POSITIONS
 from lecture_system.frontend_helpers import formatted_speaker_data, generate_html_room_display, dataToDict
+from lecture_system.controller import Controller
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'esp3903!'
@@ -28,6 +28,14 @@ def main():
     """
     return render_template('index.html')
 
+@app.route('/debug')
+def debug():
+    """
+    A debug screen.
+    Displays unformatted data
+    """
+    return render_template('debug.html')
+
 
 def microphoneInputReader():
     """
@@ -35,17 +43,26 @@ def microphoneInputReader():
     Ideally to be run in a separate thread?
     """
     print("Reading the microphone")
-    speakers = constants.SPEAKER_ARRAY
-    eventcounter = 0
+    speakers = SPEAKER_ARRAY
+    sensors = [Sensor(pos, speakers) for pos in SENSOR_POSITIONS]
+    controller = Controller(speakers, sensors)
 
+    @socketio.on('set target')
+    def handle_set_target(value):
+        controller.target_dB = float(value)
+
+    # Until audio inputs are added, we can use testMode to output a fake loudness level
+    controller.testMode()
+
+    eventcounter = 0
     while not thread_stop_event.isSet():
-        for i in range(len(speakers)):
-            speaker = speakers[i]
-            speakers[i] = Speaker(speaker.loudness + 0.001, speaker.gain, speaker.position)
-        sensors = measure_with_sensors(speakers)
-        speakers = update_speaker_gain(speakers, sensors)
+        controller.update()
 
         if eventcounter % 100 == 0:
+            controller.adjustGains()
+            # This could be out of the if statment for the adjustment to happen faster
+            # In here right now so it is more visible
+
             # Every time this event is emitted, the webpage content is updated
             socketio.emit('system_update', {'data': {
                 "table" : formatted_speaker_data(speakers),
@@ -71,4 +88,4 @@ def connect():
 
 
 if __name__ == '__main__':
-    socketio.run(app, debug=True)
+    socketio.run(app, debug=False)

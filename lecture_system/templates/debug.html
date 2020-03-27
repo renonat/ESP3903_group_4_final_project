@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js" integrity="sha256-yr4fRk/GU1ehYJPAs8P4JlTgu0Hdsp4ZKrx8bDEDC3I=" crossorigin="anonymous"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+	<script type="text/javascript" charset="utf-8">
+		$(document).ready(function(){
+			//connect to the socket server.
+			var socket = io.connect('http://' + document.domain + ':' + location.port + '/');
+
+			var numbers_received = [];
+
+			let sensor_ids = ["sensor1", "sensor2", "sensor3"];
+			let speaker_ids = ["speaker1", "speaker2"];
+			let chart_ids = sensor_ids.concat(speaker_ids);
+
+			//receive details from server
+			socket.on('system_update', function(msg) {
+				const {table, readings, eventcounter, roomlayout} = msg.data;
+
+				// update html table and room layout
+        $('#readings').prepend('<pre>' + JSON.stringify(readings, null, 4) + '</pre>');
+        $('#log').html(table);
+				$('#roomlayout').html(roomlayout);
+
+			});
+
+      $( "#target" ).change(function() {
+        socket.emit('set target', $(this).val());
+      });
+
+		});
+	</script>
+</head>
+
+<body>
+  <label for="target">Target dB value:</label>
+  <input type="number" id="target" name="target" min="1" max="100" value=''>
+
+  <h2>Speakers</h2>
+  <div id="log"></div>
+
+  <h2>Room View</h2>
+  <div id="roomlayout" style="border-style: solid; border-width: thin; display: inline-block"></div>
+
+  <h2>Readings</h2>
+	<div id="readings" style="height: 500px; overflow-y: scroll;"></div>
+</body>
+
+</html>
