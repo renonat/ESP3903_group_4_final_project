@@ -1,25 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<style>
-		* {
-			box-sizing: border-box;
-		}
-
-		.row { 
-			display: flex;
-			height: 45vh
-		}
-
-		.graph {
-			border: 1px solid black;
-			width: 100%;
-			max-width: calc(100% / 3);
-			margin: 8px;
-			padding: 8px;
-			/*height: 10px;*/
-		}
-	</style>
+	<link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='main.css') }}">
 
 	<script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js" integrity="sha256-yr4fRk/GU1ehYJPAs8P4JlTgu0Hdsp4ZKrx8bDEDC3I=" crossorigin="anonymous"></script>
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
@@ -27,24 +9,53 @@
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js"></script>
 
 	<script type="text/javascript" charset="utf-8">
+
+		function initializeChart(DOMelement) {
+			const ms = 40;
+			const layout_template = {
+				title: DOMelement.id,
+				margin: { l: ms, r: ms, t: ms, b: ms },
+				padding: 40,
+				legend: { orientation: 'h' },
+				xaxis: { title: "Time" },
+				yaxis: { title: "Loudness (dB)" },
+				yaxis2: {
+					title: "Gain (dB)",
+					overlaying: 'y',
+					side: 'right'
+				}
+			};
+			const config = { displayModeBar: false };
+			let traces = [{
+				name: "Loudness",
+				y: [],
+				type: 'line'
+			}];
+			let isSpeaker = DOMelement.id.includes('speaker');
+			
+			if (isSpeaker) {
+				traces.push({
+					name: "Gain",
+					y: [],
+					type: 'line',
+					yaxis: 'y2'
+				});
+			}
+
+
+			Plotly.newPlot(DOMelement, traces, layout_template, config)
+		}
+
 		$(document).ready(function(){
 			//connect to the socket server.
 			var socket = io.connect('http://' + document.domain + ':' + location.port + '/');
 
-			var numbers_received = [];
+			const sensor_divs = $('.sensor').toArray();
+			const speaker_divs = $('.speaker').toArray();
+			const chart_divs = sensor_divs.concat(speaker_divs);
 
-			let sensor_ids = ["sensor1", "sensor2", "sensor3"];
-			let speaker_ids = ["speaker1", "speaker2"];
-			let chart_ids = sensor_ids.concat(speaker_ids);
-
-			let sensor_divs = $('.sensor').toArray();
-			let speaker_divs = $('.speaker').toArray();
-
-			chart_ids.forEach(chart_id => {
-				Plotly.plot(chart_id, [{
-					y: [0],
-					type: 'line'
-				}])
+			chart_divs.forEach(chart_div => {
+				initializeChart(chart_div);
 			});
 
 			// testig whether slower event updates helps
@@ -52,56 +63,37 @@
 				const {readings} = msg.data;
 
 				//update speaker graphs
-				for (let i = 0; i < speaker_ids.length; i++) {
-					Plotly.extendTraces(speaker_ids[i], {
-						y: [[readings.speakers[i].gain]]}, [0]
-					);
-				}
+				speaker_divs.forEach((speaker, i) => {
+					Plotly.extendTraces(speaker, {
+						y: [
+							[readings.speakers[i].loudness],
+							[readings.speakers[i].gain]
+						]
+					}, [0, 1]);
+				});
+
+				sensor_divs.forEach((sensor, i) => {
+					Plotly.extendTraces(sensor, {
+						y: [[readings.sensors[i].loudness]]
+					}, [0]);
+				})
 			})
 			
 			//receive details from server
 			socket.on('system_update', function(msg) {
-				const {table, readings, eventcounter, roomlayout} = msg.data;
+				const {roomlayout} = msg.data;
 
 				// update html table and room layout
-				$('#log').html(table);
+				// $('#log').html(table);
 				$('#roomlayout').html(roomlayout);
 
-
-				// update speaker graphs
-				// for (let i = 0; i < speaker_ids.length; i++) {
-				// 	Plotly.extendTraces(speaker_ids[i], {
-				// 		y: [[readings.speakers[i].gain]]}, [0]
-				// 	);
-				// }
-
-				// update sensor graphs
-				// for (let i = 0; i < sensor_ids.length; i++) {
-				// 	Plotly.extendTraces(sensor_ids[i], {
-				// 		y: [[readings.sensors[i].loudness]]}, [0]
-				// 	);
-				// }
-
-				// update all graphs for sliding axis after 20 "ticks"
-				// let cnt = eventcounter / 100;
-				// let offset = 20;
-				// if (cnt > offset) {
-				// 	chart_ids.forEach(chart_id => {
-				// 		Plotly.relayout(chart_id, {
-				// 			xaxis: {
-				// 				range: [cnt-offset, cnt]
-				// 			}
-				// 		});
-				// 	});                    
-				// }
 			});
-
 		});
 	</script>
 </head>
 
 <body>
-	<div id="log"></div>
+	<!-- <div id="log"></div> -->
 
 	<main class='main'>
 
