@@ -8,7 +8,7 @@ class Controller():
     speakers: List[Speaker]
     sensors: List[Sensor]
 
-    target_dB: float = 60
+    target_dB: float = 35
     _weights: List[List[float]]
 
     def __init__(self, speakers, sensors):

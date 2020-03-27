@@ -7,6 +7,7 @@ import soundfile as sf
 import numpy as np
 from timeit import default_timer as timer
 import time
+from math import sqrt, log10
 
 import plotly
 import plotly.graph_objs as go
@@ -71,14 +72,14 @@ def microphoneInputReader():
         block = audioQ.pop(0)
         controller.streamInput(block)
         controller.update()
+        controller.adjustGains()
 
         # Choose speaker[0] as the output track source
         # Get gain as a value of 1.xx, and transform the block
-        gain = 10**(controller.speakers[0].gain / 10)
+        gain = 10**(controller.speakers[0].gain/20)
         transformed_block = block * gain
         # Add the transformed block to output array, to be saved to a file
         output_data.extend([list(m) for m in transformed_block])
-        controller.adjustGains()
 
         if block_counter % 10 == 0:
             # Every time this event is emitted, the webpage content is updated
