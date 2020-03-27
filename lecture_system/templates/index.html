@@ -14,13 +14,14 @@
 			const ms = 40;
 			const layout_template = {
 				title: DOMelement.id,
-				margin: { l: ms, r: ms, t: ms, b: ms },
+				margin: { l: ms, r: ms, t: ms, b: ms+20 },
 				padding: 40,
 				legend: { orientation: 'h' },
 				xaxis: { title: "Time" },
 				yaxis: { title: "(dB)" },
 				autosize: true,
-				height: 320
+				height: 320,
+				font: { family: "arial" }
 			};
 			const config = {
 				displayModeBar: false,
@@ -53,42 +54,46 @@
 			const speaker_divs = $('.speaker').toArray();
 			const chart_divs = sensor_divs.concat(speaker_divs);
 
-			
-
-			chart_divs.forEach(chart_div => {
-					initializeChart(chart_div);
-				});
-				
 
 			//receive details from server
 			socket.on('system_update', function(msg) {
-				const {roomlayout} = msg.data;
+				const {roomlayout, eventcounter} = msg.data;
 
 				// update html table and room layout
 				// $('#log').html(table);
 				$('#roomlayout').html(roomlayout);
 
+				if (eventcounter === 100) {
+					chart_divs.forEach(chart_div => {
+						initializeChart(chart_div);
+					});
+				}
+
 			});
 
 			// event to update box graphs
 			socket.on('update_graphs', function(msg) {
-				const {readings} = msg.data;
+				const {readings, eventcounter} = msg.data;
 
 				// update speaker box graphs
-				speaker_divs.forEach((speaker, i) => {
-					Plotly.extendTraces(speaker, {
-						y: [
-							[readings.speakers[i].loudness],
-							[readings.speakers[i].gain]
-						]
-					}, [0, 1]);
-				});
 
-				sensor_divs.forEach((sensor, i) => {
-					Plotly.extendTraces(sensor, {
-						y: [[readings.sensors[i].loudness]]
-					}, [0]);
-				})
+				if (eventcounter >= 100) {
+					speaker_divs.forEach((speaker, i) => {
+						Plotly.extendTraces(speaker, {
+							y: [
+								[readings.speakers[i].loudness],
+								[readings.speakers[i].gain]
+							]
+						}, [0, 1]);
+					});
+
+					sensor_divs.forEach((sensor, i) => {
+						Plotly.extendTraces(sensor, {
+							y: [[readings.sensors[i].loudness]]
+						}, [0]);
+					})
+				}
+				
 			})
 			
 			
@@ -118,7 +123,8 @@
 
 		  	<div class="bg-white flex-1 m-2 p-2"><div id="speaker1" class="speaker"></div></div>
 
-		    <div class="flex-initial bg-white">
+		    <div class="flex-1 bg-white">
+		    	
 		    	<div id="room" class="">
 					<div style='text-align: center'>Front of Room</div>
 

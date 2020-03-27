@@ -69,6 +69,7 @@ def microphoneInputReader():
             
             socketio.emit('update_graphs', {'data': {
                 "readings": dataToDict(speakers, sensors),
+                "eventcounter": eventcounter
             }})
 
         socketio.sleep(0.001)
