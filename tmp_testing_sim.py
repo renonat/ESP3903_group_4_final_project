@@ -6,7 +6,6 @@ speakers = SPEAKER_ARRAY
 sensors = [Sensor(pos, speakers) for pos in SENSOR_POSITIONS]
 
 controller = Controller(speakers, sensors)
-controller.calibrateSystem()
 
 controller.testMode()
 for i in range(1000):

@@ -3,20 +3,20 @@ from dataclasses import dataclass
 
 from lecture_system.types import Speaker, Sensor
 from lecture_system.constants import ADJ_RATE
-from lecture_system.room_layout import SPEAKER_ARRAY, SENSOR_POSITIONS
 
 class Controller():
     speakers: List[Speaker]
     sensors: List[Sensor]
 
-    target_dB: float = 40
+    target_dB: float = 60
     _weights: List[List[float]]
 
     def __init__(self, speakers, sensors):
         self.speakers = speakers
         self.sensors = sensors
+        self._calibrateSystem()
 
-    def calibrateSystem(self):
+    def _calibrateSystem(self):
         self._weights = []
         for speaker in self.speakers:
             speaker.playCalibrationTone()
@@ -25,8 +25,8 @@ class Controller():
                 sensor.update()
                 speaker_weights.append(sensor.getSensorValue())
                 sensor.flushHistory()
-            speaker.stop()
 
+            speaker.stop()
             self._weights.append([w/sum(speaker_weights) for w in speaker_weights])
 
     def update(self):
@@ -37,6 +37,8 @@ class Controller():
         sensed_values = [sensor.getSensorValue() for sensor in self.sensors]
         for speaker, weights in zip(self.speakers, self._weights):
             differential = sum([wi * (self.target_dB - si) for si, wi in zip(sensed_values, weights)])/len(self.sensors)
+            if abs(differential) < 0.01:
+                differential = 0
             speaker.gain += ADJ_RATE * differential
 
     def testMode(self):
