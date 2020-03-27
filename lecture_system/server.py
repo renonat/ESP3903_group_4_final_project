@@ -3,11 +3,6 @@ from flask_socketio import SocketIO  # type: ignore
 from threading import Thread, Event
 from typing import Optional
 
-import plotly
-import plotly.graph_objs as go
-import plotly.express as px
-import json
-
 from lecture_system.types import Speaker, Sensor
 from lecture_system.room_layout import SPEAKER_ARRAY, SENSOR_POSITIONS
 from lecture_system.frontend_helpers import formatted_speaker_data, generate_html_room_display, dataToDict
