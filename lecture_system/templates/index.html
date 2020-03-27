@@ -74,10 +74,11 @@
 			// event to update box graphs
 			socket.on('update_graphs', function(msg) {
 				const {readings, eventcounter} = msg.data;
+				cnt = eventcounter / 100;
+				const offset = 10;;
 
 				// update speaker box graphs
-
-				if (eventcounter >= 100) {
+				if (eventcounter > 1) {
 					speaker_divs.forEach((speaker, i) => {
 						Plotly.extendTraces(speaker, {
 							y: [
@@ -93,26 +94,35 @@
 						}, [0]);
 					})
 				}
+
+				if (eventcounter > offset) {
+					chart_divs.forEach(DOMelement => {
+						Plotly.relayout(DOMelement, {
+							xaxis: { range: [cnt - offset, cnt] }
+						});
+					})
+				}
 				
 			})
 			
-			
+			$( "#target" ).change(function() {
+		        socket.emit('set target', $(this).val());
+		      });
 		});
+
+
 	</script>
 </head>
 
-<body>
+<body style="font-family: Arial">
 	<!-- <div id="log"></div> -->
 
 	<main class='main'>
 
-		<div class="row">
+		<label for="target">Target dB value:</label>
+  		<input type="number" id="target" name="target" min="1" max="100" value=''>
 
-			
-
-		</div>
-
-		<div class="bg-gray-200 h-screen flex flex-col">
+		<div class="bg-gray-200 flex flex-col">
 		  <div class="bg-gray-300  m-2 flex justify-between">
 		    <div class="bg-white flex-1 m-2 p-2"><div id="sensor1" class="sensor"></div></div>
 		    <div class="bg-white flex-1 m-2 p-2"><div id="sensor2" class="sensor"></div></div>
