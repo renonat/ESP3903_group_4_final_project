@@ -2,7 +2,7 @@
 <html>
 <head>
 	<link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='main.css') }}">
-
+	<link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/1.2.0/tailwind.min.css" rel="stylesheet">
 	<script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js" integrity="sha256-yr4fRk/GU1ehYJPAs8P4JlTgu0Hdsp4ZKrx8bDEDC3I=" crossorigin="anonymous"></script>
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
 	<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
@@ -18,17 +18,17 @@
 				padding: 40,
 				legend: { orientation: 'h' },
 				xaxis: { title: "Time" },
-				yaxis: { title: "Loudness (dB)" },
-				yaxis2: {
-					title: "Gain (dB)",
-					overlaying: 'y',
-					side: 'right'
-				}
+				yaxis: { title: "(dB)" },
+				autosize: true,
+				height: 320
 			};
-			const config = { displayModeBar: false };
+			const config = {
+				displayModeBar: false,
+				responsive: true
+			};
 			let traces = [{
 				name: "Loudness",
-				y: [],
+				y: [0],
 				type: 'line'
 			}];
 			let isSpeaker = DOMelement.id.includes('speaker');
@@ -36,9 +36,8 @@
 			if (isSpeaker) {
 				traces.push({
 					name: "Gain",
-					y: [],
+					y: [0],
 					type: 'line',
-					yaxis: 'y2'
 				});
 			}
 
@@ -54,15 +53,28 @@
 			const speaker_divs = $('.speaker').toArray();
 			const chart_divs = sensor_divs.concat(speaker_divs);
 
+			
+
 			chart_divs.forEach(chart_div => {
-				initializeChart(chart_div);
+					initializeChart(chart_div);
+				});
+				
+
+			//receive details from server
+			socket.on('system_update', function(msg) {
+				const {roomlayout} = msg.data;
+
+				// update html table and room layout
+				// $('#log').html(table);
+				$('#roomlayout').html(roomlayout);
+
 			});
 
-			// testig whether slower event updates helps
+			// event to update box graphs
 			socket.on('update_graphs', function(msg) {
 				const {readings} = msg.data;
 
-				//update speaker graphs
+				// update speaker box graphs
 				speaker_divs.forEach((speaker, i) => {
 					Plotly.extendTraces(speaker, {
 						y: [
@@ -79,15 +91,7 @@
 				})
 			})
 			
-			//receive details from server
-			socket.on('system_update', function(msg) {
-				const {roomlayout} = msg.data;
-
-				// update html table and room layout
-				// $('#log').html(table);
-				$('#roomlayout').html(roomlayout);
-
-			});
+			
 		});
 	</script>
 </head>
@@ -98,24 +102,36 @@
 	<main class='main'>
 
 		<div class="row">
-			<div id="sensor1" class="graph sensor"></div>
-			<div id="sensor2" class="graph sensor"></div>
-			<div id="sensor3" class="graph sensor"></div>
+
+			
+
 		</div>
 
-		<div class="row">
-			<div id="speaker1" class="graph speaker"></div>
+		<div class="bg-gray-200 h-screen flex flex-col">
+		  <div class="bg-gray-300  m-2 flex justify-between">
+		    <div class="bg-white flex-1 m-2 p-2"><div id="sensor1" class="sensor"></div></div>
+		    <div class="bg-white flex-1 m-2 p-2"><div id="sensor2" class="sensor"></div></div>
+		    <div class="bg-white flex-1 m-2 p-2"><div id="sensor3" class="sensor"></div></div>
+		  </div>
 
-			<div id="room" class="graph">
-				<div style='text-align: center'>Front of Room</div>
+		  <div class="bg-gray-300 m-2 flex justify-between">
 
-				<div id="roomlayout" 
-					style="border-style: solid; border-width: thin; background-color: #efe5d2; max-width: 100%; overflow-x: scroll;">
+		  	<div class="bg-white flex-1 m-2 p-2"><div id="speaker1" class="speaker"></div></div>
+
+		    <div class="flex-initial bg-white">
+		    	<div id="room" class="">
+					<div style='text-align: center'>Front of Room</div>
+
+					<div id="roomlayout" 
+						style="border-style: solid; border-width: thin; background-color: #efe5d2;">
+					</div>
 				</div>
-			</div>
+		    </div>
 
-			<div id="speaker2" class="graph speaker"></div>
+		  	<div class="bg-white flex-1 m-2 p-2"><div id="speaker2" class="speaker"></div></div>
+		  </div>
 		</div>
+
 	</main>
 
 </body>
