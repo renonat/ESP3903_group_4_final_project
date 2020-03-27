@@ -66,6 +66,11 @@ def microphoneInputReader():
                 "roomlayout": generate_html_room_display(speakers, sensors)
             }})
 
+            if eventcounter % 1000 == 0:
+                socketio.emit('update_graphs', {'data': {
+                    "readings": dataToDict(speakers, sensors),
+                }})
+
         socketio.sleep(0.001)
         eventcounter += 1
 

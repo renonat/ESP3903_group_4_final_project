@@ -25,6 +25,7 @@
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
 	<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js"></script>
+
 	<script type="text/javascript" charset="utf-8">
 		$(document).ready(function(){
 			//connect to the socket server.
@@ -36,12 +37,27 @@
 			let speaker_ids = ["speaker1", "speaker2"];
 			let chart_ids = sensor_ids.concat(speaker_ids);
 
+			let sensor_divs = $('.sensor').toArray();
+			let speaker_divs = $('.speaker').toArray();
+
 			chart_ids.forEach(chart_id => {
 				Plotly.plot(chart_id, [{
 					y: [0],
 					type: 'line'
 				}])
 			});
+
+			// testig whether slower event updates helps
+			socket.on('update_graphs', function(msg) {
+				const {readings} = msg.data;
+
+				//update speaker graphs
+				for (let i = 0; i < speaker_ids.length; i++) {
+					Plotly.extendTraces(speaker_ids[i], {
+						y: [[readings.speakers[i].gain]]}, [0]
+					);
+				}
+			})
 			
 			//receive details from server
 			socket.on('system_update', function(msg) {
@@ -53,31 +69,31 @@
 
 
 				// update speaker graphs
-				for (let i = 0; i < speaker_ids.length; i++) {
-					Plotly.extendTraces(speaker_ids[i], {
-						y: [[readings.speakers[i].gain]]}, [0]
-					);
-				}
+				// for (let i = 0; i < speaker_ids.length; i++) {
+				// 	Plotly.extendTraces(speaker_ids[i], {
+				// 		y: [[readings.speakers[i].gain]]}, [0]
+				// 	);
+				// }
 
 				// update sensor graphs
-				for (let i = 0; i < sensor_ids.length; i++) {
-					Plotly.extendTraces(sensor_ids[i], {
-						y: [[readings.sensors[i].loudness]]}, [0]
-					);
-				}
+				// for (let i = 0; i < sensor_ids.length; i++) {
+				// 	Plotly.extendTraces(sensor_ids[i], {
+				// 		y: [[readings.sensors[i].loudness]]}, [0]
+				// 	);
+				// }
 
 				// update all graphs for sliding axis after 20 "ticks"
-				let cnt = eventcounter / 100;
-				let offset = 20;
-				if (cnt > offset) {
-					chart_ids.forEach(chart_id => {
-						Plotly.relayout(chart_id, {
-							xaxis: {
-								range: [cnt-offset, cnt]
-							}
-						});
-					});                    
-				}
+				// let cnt = eventcounter / 100;
+				// let offset = 20;
+				// if (cnt > offset) {
+				// 	chart_ids.forEach(chart_id => {
+				// 		Plotly.relayout(chart_id, {
+				// 			xaxis: {
+				// 				range: [cnt-offset, cnt]
+				// 			}
+				// 		});
+				// 	});                    
+				// }
 			});
 
 		});
@@ -90,13 +106,13 @@
 	<main class='main'>
 
 		<div class="row">
-			<div id="sensor1" class="graph"></div>
-			<div id="sensor2" class="graph"></div>
-			<div id="sensor3" class="graph"></div>
+			<div id="sensor1" class="graph sensor"></div>
+			<div id="sensor2" class="graph sensor"></div>
+			<div id="sensor3" class="graph sensor"></div>
 		</div>
 
 		<div class="row">
-			<div id="speaker1" class="graph"></div>
+			<div id="speaker1" class="graph speaker"></div>
 
 			<div id="room" class="graph">
 				<div style='text-align: center'>Front of Room</div>
@@ -106,7 +122,7 @@
 				</div>
 			</div>
 
-			<div id="speaker2" class="graph"></div>
+			<div id="speaker2" class="graph speaker"></div>
 		</div>
 	</main>
 
