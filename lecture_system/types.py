@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from math import log10, sqrt
 from functools import reduce
 from collections import deque
+import numpy as np
 
 from lecture_system.constants import CALIBRATION_DB, REFERENCE_DISTANCE, SENSOR_SAMPLE_LENGTH
 
@@ -18,9 +19,14 @@ class Speaker():
     position: Position
     gain: float = 0
     _audio_source: str = 'silent'
+    _audio_block = None
 
     def playCalibrationTone(self):
         self._audio_source = 'calibration'
+
+    def playAudioBlock(self, audio_block):
+        self._audio_source = 'block'
+        self._audio_block = audio_block
 
     def playTestTone(self):
         self._audio_source = 'test'
@@ -35,6 +41,12 @@ class Speaker():
             return CALIBRATION_DB + self.gain
         elif self._audio_source == 'test':
             return 90 + self.gain
+        elif self._audio_source == 'block':
+            # Arbitrarily choose 1 rms = 60dB
+            # TODO: Something is really funky here
+            # TODO: Consider that maybe if the speaker loudness is below a threshold we don't amplify it?
+            block_loudness = sqrt(np.mean(self._audio_block**2)) * 60
+            return block_loudness + self.gain
 
 
 @dataclass
