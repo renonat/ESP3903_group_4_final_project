@@ -3,6 +3,12 @@ from flask_socketio import SocketIO  # type: ignore
 from threading import Thread, Event
 from typing import Optional
 
+import soundfile as sf
+import numpy as np
+from timeit import default_timer as timer
+import time
+from math import sqrt, log10
+
 import plotly
 import plotly.graph_objs as go
 import plotly.express as px
@@ -51,29 +57,48 @@ def microphoneInputReader():
     def handle_set_target(value):
         controller.target_dB = float(value)
 
-    # Until audio inputs are added, we can use testMode to output a fake loudness level
-    controller.testMode()
+    # data is an array of [L,R] float values, with (samplerate) samples per second
+    data, samplerate = sf.read('data/test_parasites.wav', dtype='float32')
+    # Chunk the data into blocks of (BLOCKSIZE) samples
+    BLOCKSIZE = 1024
+    # Each block is therefore (BLOCK_LEN_S) seconds long
+    BLOCK_LEN_S = BLOCKSIZE / samplerate
+    audioQ = np.split(data, len(data)/BLOCKSIZE)
+    output_data = []
 
-    eventcounter = 0
-    while not thread_stop_event.isSet():
+    block_counter = 0
+    while not thread_stop_event.isSet() and len(audioQ) > 0:
+        _start = timer()
+        block = audioQ.pop(0)
+        controller.streamInput(block)
         controller.update()
+        controller.adjustGains()
 
-        if eventcounter % 100 == 0:
-            controller.adjustGains()
-            # This could be out of the if statment for the adjustment to happen faster
-            # In here right now so it is more visible
+        # Choose speaker[0] as the output track source
+        # Get gain as a value of 1.xx, and transform the block
+        gain = 10**(controller.speakers[0].gain/20)
+        transformed_block = block * gain
+        # Add the transformed block to output array, to be saved to a file
+        output_data.extend([list(m) for m in transformed_block])
 
+        if block_counter % 10 == 0:
             # Every time this event is emitted, the webpage content is updated
             socketio.emit('system_update', {'data': {
                 "table" : formatted_speaker_data(speakers),
                 "readings" : dataToDict(speakers, sensors),
-                "eventcounter": eventcounter,
+                "eventcounter": block_counter,
                 "roomlayout": generate_html_room_display(speakers, sensors)
             }})
 
-        socketio.sleep(0.001)
-        eventcounter += 1
+        _end = timer()
+        # sleep such that each cycle is the same length of time as a block should be
+        sleep_time = max(0, BLOCK_LEN_S - (_end - _start))
+        socketio.sleep(sleep_time)
+        block_counter += 1
 
+    # Processing of the audio file has finished, write transform to output file
+    sf.write('data/output-file.wav', np.array(output_data), samplerate)
+    print('Completed processing the audio file')
 
 
 @socketio.on('connect')
