@@ -60,7 +60,6 @@
                 const {roomlayout, eventcounter} = msg.data;
 
                 // update html table and room layout
-                // $('#log').html(table);
                 $('#roomlayout').html(roomlayout);
 
                 if (eventcounter === 100) {
@@ -119,8 +118,6 @@
 </head>
 
 <body style="font-family: Arial">
-    <!-- <div id="log"></div> -->
-
     <main class='main'>
 
         <div class="w-full bg-gray-800 text-white p-3">
@@ -136,23 +133,21 @@
         
 
         <div class="bg-gray-200 flex flex-col">
-          <div class="bg-gray-300  m-2 flex justify-between">
-            <div class="bg-white flex-1 m-2 p-2"><div id="sensor1" class="sensor"></div></div>
-            <div class="bg-white flex-1 m-2 p-2"><div id="sensor2" class="sensor"></div></div>
-            <div class="bg-white flex-1 m-2 p-2"><div id="sensor3" class="sensor"></div></div>
+          <div class="bg-gray-200 flex justify-between">
+            <div class="bg-white flex-1 mr-2 p-2"><div id="sensor1" class="sensor"></div></div>
+            <div class="bg-white flex-1 mr-2 p-2"><div id="sensor2" class="sensor"></div></div>
+            <div class="bg-white flex-1 p-2"><div id="sensor3" class="sensor"></div></div>
           </div>
 
-          <div class="bg-gray-300 m-2 flex justify-between">
-            <div class="bg-white flex-1 m-2 p-2"><div id="speaker1" class="speaker"></div></div>
-            <div class="flex-1 bg-white">
-                <div id="room" class="">
+          <div class="bg-gray-200 mt-2 flex justify-between">
+            <div class="bg-white mr-2 flex-1"><div id="speaker1" class="speaker"></div></div>
+            <div class="flex-1 mr-2 bg-white">
+                <div id="room" class="p-2">
+                    <div id="roomlayout"></div>
                     <div style='text-align: center'>Front of Room</div>
-                    <div id="roomlayout" 
-                        style="border-style: solid; border-width: thin; background-color: #efe5d2;">
-                    </div>
                 </div>
             </div>
-            <div class="bg-white flex-1 m-2 p-2"><div id="speaker2" class="speaker"></div></div>
+            <div class="bg-white flex-1 p-2"><div id="speaker2" class="speaker"></div></div>
           </div>
         </div>
 
