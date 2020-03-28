@@ -18,7 +18,8 @@
                 padding: 40,
                 legend: { orientation: 'h' },
                 xaxis: { title: "Time" },
-                yaxis: { title: "(dB)" },
+                yaxis: { title: "Loudness (dB)" },
+                yaxis2: { title: "Gain (db) ", side: "right", overlaying: "y"},
                 autosize: true,
                 height: 320,
                 font: { family: "arial" }
@@ -39,6 +40,7 @@
                     name: "Gain",
                     y: [0],
                     type: 'line',
+                    yaxis: 'y2'
                 });
             }
 
