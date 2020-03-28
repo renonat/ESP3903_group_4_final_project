@@ -58,7 +58,7 @@ def microphoneInputReader():
         controller.target_dB = float(value)
 
     # data is an array of [L,R] float values, with (samplerate) samples per second
-    data, samplerate = sf.read('data/thats-how-you-get-ants.wav', dtype='float32')
+    data, samplerate = sf.read('data/test_parasites.wav', dtype='float32')
     # Chunk the data into blocks of (BLOCKSIZE) samples
     BLOCKSIZE = 1024
     # Each block is therefore (BLOCK_LEN_S) seconds long
