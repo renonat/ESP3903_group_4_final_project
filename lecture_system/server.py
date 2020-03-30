@@ -53,7 +53,7 @@ def microphoneInputReader():
         controller.target_dB = float(value)
 
     # data is an array of [L,R] float values, with (samplerate) samples per second
-    data, samplerate = sf.read('data/test_parasites.wav', dtype='float32')
+    data, samplerate = sf.read('data/thats-how-you-get-ants.wav', dtype='float32')
     # Chunk the data into blocks of (BLOCKSIZE) samples
     BLOCKSIZE = 1024
     # Each block is therefore (BLOCK_LEN_S) seconds long
@@ -87,12 +87,11 @@ def microphoneInputReader():
             
             socketio.emit('update_graphs', {'data': {
                 "readings": dataToDict(speakers, sensors),
-                "eventcounter": eventcounter
+                "eventcounter": block_counter
             }})
 
-        socketio.sleep(0.001)
-        eventcounter += 1
-        
+        _end = timer()
+
         # sleep such that each cycle is the same length of time as a block should be
         sleep_time = max(0, BLOCK_LEN_S - (_end - _start))
         socketio.sleep(sleep_time)
