@@ -8,7 +8,7 @@ class Controller():
     speakers: List[Speaker]
     sensors: List[Sensor]
 
-    target_dB: float = 60
+    target_dB: float = 35
     _weights: List[List[float]]
 
     def __init__(self, speakers, sensors):
@@ -45,3 +45,6 @@ class Controller():
         for speaker in self.speakers:
             speaker.playTestTone()
 
+    def streamInput(self, audio_block):
+        for speaker in self.speakers:
+            speaker.playAudioBlock(audio_block)
