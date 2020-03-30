@@ -60,7 +60,6 @@ def microphoneInputReader():
 
             # Every time this event is emitted, the webpage content is updated
             socketio.emit('system_update', {'data': {
-                "table" : formatted_speaker_data(speakers),
                 "readings" : dataToDict(speakers, sensors),
                 "eventcounter": eventcounter,
                 "roomlayout": generate_html_room_display(speakers, sensors)
