@@ -32,7 +32,7 @@ def generate_html_room_display(speakers: List[Speaker], sensors: List[Sensor]) -
         room_arr[sensor.position.y + 2][sensor.position.x + 2] = "🎙️"
         room_arr[sensor.position.y + 3][sensor.position.x + 2] = f"{sensor.getSensorValue():0.2f}dB"
 
-    for row in room_arr:
+    for row in reversed(room_arr):
         table.add_row(row)
     return table.get_html_string(format=True)
 

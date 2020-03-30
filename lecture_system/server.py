@@ -9,11 +9,6 @@ from timeit import default_timer as timer
 import time
 from math import sqrt, log10
 
-import plotly
-import plotly.graph_objs as go
-import plotly.express as px
-import json
-
 from lecture_system.types import Speaker, Sensor
 from lecture_system.room_layout import SPEAKER_ARRAY, SENSOR_POSITIONS
 from lecture_system.frontend_helpers import formatted_speaker_data, generate_html_room_display, dataToDict
@@ -84,13 +79,20 @@ def microphoneInputReader():
         if block_counter % 10 == 0:
             # Every time this event is emitted, the webpage content is updated
             socketio.emit('system_update', {'data': {
-                "table" : formatted_speaker_data(speakers),
                 "readings" : dataToDict(speakers, sensors),
                 "eventcounter": block_counter,
                 "roomlayout": generate_html_room_display(speakers, sensors)
             }})
 
-        _end = timer()
+            
+            socketio.emit('update_graphs', {'data': {
+                "readings": dataToDict(speakers, sensors),
+                "eventcounter": eventcounter
+            }})
+
+        socketio.sleep(0.001)
+        eventcounter += 1
+        
         # sleep such that each cycle is the same length of time as a block should be
         sleep_time = max(0, BLOCK_LEN_S - (_end - _start))
         socketio.sleep(sleep_time)
