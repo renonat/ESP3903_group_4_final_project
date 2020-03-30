@@ -18,6 +18,7 @@ from lecture_system.types import Speaker, Sensor
 from lecture_system.room_layout import SPEAKER_ARRAY, SENSOR_POSITIONS
 from lecture_system.frontend_helpers import formatted_speaker_data, generate_html_room_display, dataToDict
 from lecture_system.controller import Controller
+from lecture_system.tracker import Tracker
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'esp3903!'
@@ -52,13 +53,14 @@ def microphoneInputReader():
     speakers = SPEAKER_ARRAY
     sensors = [Sensor(pos, speakers) for pos in SENSOR_POSITIONS]
     controller = Controller(speakers, sensors)
+    tracker = Tracker(speakers, sensors)
 
     @socketio.on('set target')
     def handle_set_target(value):
         controller.target_dB = float(value)
 
     # data is an array of [L,R] float values, with (samplerate) samples per second
-    data, samplerate = sf.read('data/test_parasites.wav', dtype='float32')
+    data, samplerate = sf.read('data/thats-how-you-get-ants.wav', dtype='float32')
     # Chunk the data into blocks of (BLOCKSIZE) samples
     BLOCKSIZE = 1024
     # Each block is therefore (BLOCK_LEN_S) seconds long
@@ -73,6 +75,7 @@ def microphoneInputReader():
         controller.streamInput(block)
         controller.update()
         controller.adjustGains()
+        tracker.update()
 
         # Choose speaker[0] as the output track source
         # Get gain as a value of 1.xx, and transform the block
@@ -98,6 +101,7 @@ def microphoneInputReader():
 
     # Processing of the audio file has finished, write transform to output file
     sf.write('data/output-file.wav', np.array(output_data), samplerate)
+    tracker.write_csv()
     print('Completed processing the audio file')
 
 
