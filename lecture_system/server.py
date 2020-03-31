@@ -55,7 +55,7 @@ def microphoneInputReader():
         controller.target_dB = float(value)
 
     # data is an array of [L,R] float values, with (samplerate) samples per second
-    data, samplerate = sf.read('data/loud-intro-normal-gradual-decrease.wav', dtype='float32')
+    data, samplerate = sf.read('data/tone-sudden-2.wav', dtype='float32')
     # Chunk the data into blocks of (BLOCKSIZE) samples
     BLOCKSIZE = 1024
     # Each block is therefore (BLOCK_LEN_S) seconds long
@@ -70,7 +70,7 @@ def microphoneInputReader():
         controller.streamInput(block)
         controller.update()
         controller.adjustGains()
-        tracker.update()
+        tracker.update(BLOCK_LEN_S * block_counter)
 
         # Choose speaker[0] as the output track source
         # Get gain as a value of 1.xx, and transform the block
@@ -101,7 +101,7 @@ def microphoneInputReader():
         block_counter += 1
 
     # Processing of the audio file has finished, write transform to output file
-    sf.write('data/output-file.wav', np.array(output_data), samplerate)
+    sf.write('data/output.wav', np.array(output_data), samplerate)
     tracker.write_csv()
     print('Completed processing the audio file')
 

@@ -72,8 +72,9 @@ class Sensor():
         loudnesses = [self._senseSpeaker(speaker) for speaker in self.speakers]
         total_loudness = reduce(self._addDb, loudnesses)
 
-        if total_loudness < 30 and len(self._history) > 0:
+        if total_loudness < 15 and len(self._history) > 0:
             self._history.append(self._history[-1])
+            print(total_loudness)
         else:
             self._history.append(total_loudness)
 
