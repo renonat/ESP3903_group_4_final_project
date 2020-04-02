@@ -45,6 +45,6 @@ class Controller():
         for speaker in self.speakers:
             speaker.playTestTone()
 
-    def streamInput(self, audio_block):
+    def streamAudio(self, audio):
         for speaker in self.speakers:
-            speaker.playAudioBlock(audio_block)
+            speaker.playAudio(audio)
