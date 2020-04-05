@@ -1,8 +1,8 @@
-from lecture_system.types import Speaker, Position, Sensor
+from lecture_system.types import Position
 
-SPEAKER_ARRAY = [
-    Speaker(Position(1,1)),
-    Speaker(Position(3,0)),
+SPEAKER_POSITIONS = [
+    Position(1,1),
+    Position(3,0)
 ]
 
 SENSOR_POSITIONS = [

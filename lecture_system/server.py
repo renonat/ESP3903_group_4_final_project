@@ -10,10 +10,11 @@ import time
 from math import sqrt, log10
 
 from lecture_system.types import Speaker, Sensor
-from lecture_system.room_layout import SPEAKER_ARRAY, SENSOR_POSITIONS
+from lecture_system.room_layout import SPEAKER_POSITIONS, SENSOR_POSITIONS
 from lecture_system.frontend_helpers import formatted_speaker_data, generate_html_room_display, dataToDict
 from lecture_system.controller import Controller
 from lecture_system.tracker import Tracker
+from lecture_system.audio_input import AudioInput
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'esp3903!'
@@ -45,7 +46,9 @@ def microphoneInputReader():
     Ideally to be run in a separate thread?
     """
     print("Reading the microphone")
-    speakers = SPEAKER_ARRAY
+    audio = AudioInput('data/tone-400hz-sine.wav')
+
+    speakers = [Speaker(pos) for pos in SPEAKER_POSITIONS]
     sensors = [Sensor(pos, speakers) for pos in SENSOR_POSITIONS]
     controller = Controller(speakers, sensors)
     tracker = Tracker(speakers, sensors)
@@ -54,28 +57,24 @@ def microphoneInputReader():
     def handle_set_target(value):
         controller.target_dB = float(value)
 
-    # data is an array of [L,R] float values, with (samplerate) samples per second
-    data, samplerate = sf.read('data/tone-sudden-2.wav', dtype='float32')
-    # Chunk the data into blocks of (BLOCKSIZE) samples
-    BLOCKSIZE = 1024
-    # Each block is therefore (BLOCK_LEN_S) seconds long
-    BLOCK_LEN_S = BLOCKSIZE / samplerate
-    audioQ = np.split(data, len(data)/BLOCKSIZE)
-    output_data = []
+    controller.streamAudio(audio)
 
+    output_data = []
     block_counter = 0
-    while not thread_stop_event.isSet() and len(audioQ) > 0:
+    while not thread_stop_event.isSet() and not audio.isFinished():
         _start = timer()
-        block = audioQ.pop(0)
-        controller.streamInput(block)
+
+        audio.nextBlock()
         controller.update()
-        controller.adjustGains()
-        tracker.update(BLOCK_LEN_S * block_counter)
+        if audio.loudness > 20:
+            controller.adjustGains()
+        tracker.update(audio.block_len_s * block_counter)
 
         # Choose speaker[0] as the output track source
         # Get gain as a value of 1.xx, and transform the block
-        gain = 10**(controller.speakers[0].gain/20)
-        transformed_block = block * gain
+        gain = 10**(speakers[0].gain/20)
+        transformed_block = audio.block * gain
+
         # Add the transformed block to output array, to be saved to a file
         output_data.extend([list(m) for m in transformed_block])
 
@@ -96,12 +95,12 @@ def microphoneInputReader():
         _end = timer()
 
         # sleep such that each cycle is the same length of time as a block should be
-        sleep_time = max(0, BLOCK_LEN_S - (_end - _start))
+        sleep_time = max(0, audio.block_len_s - (_end - _start))
         socketio.sleep(sleep_time)
         block_counter += 1
 
     # Processing of the audio file has finished, write transform to output file
-    sf.write('data/output.wav', np.array(output_data), samplerate)
+    sf.write('data/output.wav', np.array(output_data), audio.samplerate)
     tracker.write_csv()
     print('Completed processing the audio file')
 
