@@ -22,6 +22,7 @@ class AudioInput():
         self.loudness = self.loudnessQ.pop(0)
 
     def _blockLoudness(self, block):
+        # Calculate the average loudness of a block in dB
         block_loudness = sqrt(np.mean(block**2))
         if block_loudness < RMS_MIN:
             return 0
